@@ -53,7 +53,7 @@ import io.swagger.util.ReflectionUtils;
 import javax.ws.rs.*;
 
 public class ArcelikReader extends AbstractReader implements ClassSwaggerReader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ArcelikReader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JaxrsReader.class);
     private static final ResponseContainerConverter RESPONSE_CONTAINER_CONVERTER = new ResponseContainerConverter();
 
     public ArcelikReader(Swagger swagger, Log LOG) {
@@ -92,7 +92,8 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             swagger = new Swagger();
         }
         Api api = AnnotationUtils.findAnnotation(cls, Api.class);
-        ApiGateway apiPath = AnnotationUtils.findAnnotation(cls, ApiGateway.class);
+        ApiGateway apiGatewayForPath = AnnotationUtils.findAnnotation(cls, ApiGateway.class);
+        Path apiPath = convertPath(apiGatewayForPath);
 
         // only read if allowing hidden apis OR api is not marked as hidden
         if (!canReadApi(readHidden, api)) {
@@ -114,65 +115,26 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
         // parse the method
         List<Method> filteredMethods = getFilteredMethods(cls);
         for (Method method : filteredMethods) {
-            ApiGateway apiOperation = AnnotationUtils.findAnnotation(method, ApiGateway.class);
-            if (apiOperation != null && apiOperation.hidden()) {
+            ApiGateway apiGateway = AnnotationUtils.findAnnotation(method, ApiGateway.class);
+            if (apiGateway != null && apiGateway.hidden()) {
                 continue;
             }
-            ApiGateway methodPath = AnnotationUtils.findAnnotation(method, ApiGateway.class);
+            ApiOperation apiOperation = convertApiOperation(apiGateway);
+            Path methodPath = convertPath(apiGateway);
 
             String parentPathValue = String.valueOf(parentPath);
             //is method default handler within a subresource
             if (apiPath == null && methodPath == null && parentPath != null && readHidden) {
                 final String updatedMethodPath = String.valueOf(parentPath);
-                ApiGateway path = new ApiGateway() {
+                Path path = new Path() {
                     @Override
-                    public HttpMethodType method() {
-                        return null;
-                    }
-
-                    @Override
-                    public String path() {
+                    public String value() {
                         return updatedMethodPath;
                     }
 
                     @Override
-                    public String description() {
-                        return "";
-                    }
-
-                    @Override
-                    public boolean log() {
-                        return false;
-                    }
-
-                    @Override
-                    public String version() {
-                        return null;
-                    }
-
-                    @Override
-                    public boolean requireBodyAndHeader() {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean hidden() {
-                        return false;
-                    }
-
-                    @Override
-                    public Class response() {
-                        return Void.class;
-                    }
-
-                    @Override
-                    public String protocols() {
-                        return "";
-                    }
-
-                    @Override
                     public Class<? extends Annotation> annotationType() {
-                        return ApiGateway.class;
+                        return Path.class;
                     }
                 };
                 methodPath = path;
@@ -187,103 +149,6 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
 
                 Operation operation = parseMethod(httpMethod, method);
                 updateOperationParameters(parentParameters, regexMap, operation);
-                ApiOperation converted = new ApiOperation(){
-
-                    @Override
-                    public Class<? extends Annotation> annotationType() {
-                        return null;
-                    }
-
-                    @Override
-                    public String value() {
-                        return apiOperation.path();
-                    }
-
-                    @Override
-                    public String notes() {
-                        return apiOperation.description();
-                    }
-
-                    @Override
-                    public String[] tags() {
-                        return new String[0];
-                    }
-
-                    @Override
-                    public Class<?> response() {
-                        return apiOperation.response();
-                    }
-
-                    @Override
-                    public String responseContainer() {
-                        return null;
-                    }
-
-                    @Override
-                    public String responseReference() {
-                        return null;
-                    }
-
-                    @Override
-                    public String httpMethod() {
-                        return apiOperation.method().getText();
-                    }
-
-                    @Override
-                    public int position() {
-                        return 0;
-                    }
-
-                    @Override
-                    public String nickname() {
-                        return null;
-                    }
-
-                    @Override
-                    public String produces() {
-                        return apiOperation.;
-                    }
-
-                    @Override
-                    public String consumes() {
-                        return null;
-                    }
-
-                    @Override
-                    public String protocols() {
-                        return null;
-                    }
-
-                    @Override
-                    public Authorization[] authorizations() {
-                        return new Authorization[0];
-                    }
-
-                    @Override
-                    public boolean hidden() {
-                        return false;
-                    }
-
-                    @Override
-                    public ResponseHeader[] responseHeaders() {
-                        return new ResponseHeader[0];
-                    }
-
-                    @Override
-                    public int code() {
-                        return 0;
-                    }
-
-                    @Override
-                    public Extension[] extensions() {
-                        return new Extension[0];
-                    }
-
-                    @Override
-                    public boolean ignoreJsonView() {
-                        return false;
-                    }
-                }
                 updateOperationProtocols(apiOperation, operation);
 
                 String[] apiConsumes = new String[0];
@@ -339,14 +204,16 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
     }
 
     private void readCommonParameters(Class<?> cls) {
-        ApiGateway path = AnnotationUtils.findAnnotation(cls, ApiGateway.class);
+        ApiGateway apiGatewayForPath = AnnotationUtils.findAnnotation(cls, ApiGateway.class);
+        Path path = convertPath(apiGatewayForPath);
         if (path != null) {
             return;
         }
 
         List<Method> filteredMethods = getFilteredMethods(cls);
         for (Method method : filteredMethods) {
-            path = AnnotationUtils.findAnnotation(method, ApiGateway.class);
+            apiGatewayForPath = AnnotationUtils.findAnnotation(method, ApiGateway.class);
+            path = convertPath(apiGatewayForPath);
             if (path != null) {
                 return;
             }
@@ -418,7 +285,7 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
         return (responseClass != null) && (httpMethod == null) && (AnnotationUtils.findAnnotation(method, Path.class) != null);
     }
 
-    private String getPath(ApiGateway classLevelPath, ApiGateway methodLevelPath, String parentPath) {
+    private String getPath(Path classLevelPath, Path methodLevelPath, String parentPath) {
         if (classLevelPath == null && methodLevelPath == null) {
             return null;
         }
@@ -434,10 +301,10 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             stringBuilder.append(parentPath);
         }
         if (classLevelPath != null) {
-            stringBuilder.append(classLevelPath.path());
+            stringBuilder.append(classLevelPath.value());
         }
-        if (methodLevelPath != null && !methodLevelPath.path().equals("/")) {
-            String methodPath = methodLevelPath.path();
+        if (methodLevelPath != null && !methodLevelPath.value().equals("/")) {
+            String methodPath = methodLevelPath.value();
             if (!methodPath.startsWith("/") && !stringBuilder.toString().endsWith("/")) {
                 stringBuilder.append("/");
             }
@@ -461,7 +328,8 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
     public Operation parseMethod(String httpMethod, Method method) {
         int responseCode = 200;
         Operation operation = new Operation();
-        ApiGateway apiOperation = AnnotationUtils.findAnnotation(method, ApiGateway.class);
+        ApiGateway apiGatewayForApiOp = AnnotationUtils.findAnnotation(method, ApiGateway.class);
+        ApiOperation apiOperation = convertApiOperation(apiGatewayForApiOp);
 
         String operationId = getOperationId(method, httpMethod);
 
@@ -474,13 +342,12 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             if (apiOperation.hidden()) {
                 return null;
             }
-            /*if (!apiOperation.nickname().isEmpty()) {
+            if (!apiOperation.nickname().isEmpty()) {
                 operationId = apiOperation.nickname();
-            }*/
+            }
 
-            //defaultResponseHeaders = parseResponseHeaders(apiOperation.responseHeaders());
-            String value = apiOperation.method() + apiOperation.path();
-            operation.summary(value).description(apiOperation.description());
+            defaultResponseHeaders = parseResponseHeaders(apiOperation.responseHeaders());
+            operation.summary(apiOperation.value()).description(apiOperation.notes());
 
             Map<String, Object> customExtensions = BaseReaderUtils.parseExtensions(apiOperation.extensions());
             operation.setVendorExtensions(customExtensions);
@@ -488,10 +355,10 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             if (!apiOperation.response().equals(Void.class) && !apiOperation.response().equals(void.class)) {
                 responseClassType = apiOperation.response();
             }
-           /* if (!apiOperation.responseContainer().isEmpty()) {
+            if (!apiOperation.responseContainer().isEmpty()) {
                 responseContainer = apiOperation.responseContainer();
-            }*/
-            /*List<SecurityRequirement> securities = new ArrayList<>();
+            }
+            List<SecurityRequirement> securities = new ArrayList<>();
             for (Authorization auth : apiOperation.authorizations()) {
                 if (!auth.value().isEmpty()) {
                     SecurityRequirement security = new SecurityRequirement();
@@ -507,7 +374,7 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
 
             for (SecurityRequirement sec : securities) {
                 operation.security(sec);
-            }*/
+            }
         }
         operation.operationId(operationId);
 
@@ -669,9 +536,9 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
         return parameter;
     }
 
-    public String extractOperationMethod(ApiGateway apiOperation, Method method, Iterator<SwaggerExtension> chain) {
-        if (apiOperation != null && !apiOperation.method().getText().isEmpty()) {
-            return apiOperation.method().getText().toLowerCase();
+    public String extractOperationMethod(ApiOperation apiOperation, Method method, Iterator<SwaggerExtension> chain) {
+        if (apiOperation != null && !apiOperation.httpMethod().isEmpty()) {
+            return apiOperation.httpMethod().toLowerCase();
         } else if (AnnotationUtils.findAnnotation(method, GET.class) != null) {
             return "get";
         } else if (AnnotationUtils.findAnnotation(method, PUT.class) != null) {
@@ -688,11 +555,11 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             return "patch";
         } else {
             // check for custom HTTP Method annotations
-           /* for (Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
+            for (Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
                 Annotation[] innerAnnotations = declaredAnnotation.annotationType().getAnnotations();
                 for (Annotation innerAnnotation : innerAnnotations) {
-                    if (innerAnnotation instanceof javax.ws.rs.HttpMethod) {
-                        javax.ws.rs.HttpMethod httpMethod = (HttpMethod) innerAnnotation;
+                    if (innerAnnotation instanceof HttpMethod) {
+                        HttpMethod httpMethod = (HttpMethod) innerAnnotation;
                         return httpMethod.value().toLowerCase();
                     }
                 }
@@ -700,8 +567,7 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
 
             if (chain.hasNext()) {
                 return chain.next().extractOperationMethod(apiOperation, method, chain);
-            }*/
-            System.err.println("Not found http method!!");
+            }
         }
 
         return null;
@@ -739,4 +605,128 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             }
         }
     }
+
+
+    private Path convertPath(ApiGateway apiGatewayForPath) {
+        if (apiGatewayForPath == null) {
+            return null;
+        }
+        return new Path() {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Path.class;
+            }
+
+            @Override
+            public String value() {
+                return apiGatewayForPath.path();
+            }
+        };
+    }
+
+
+    private ApiOperation convertApiOperation(ApiGateway apiGatewayForApiOp) {
+        if (apiGatewayForApiOp == null) {
+            return null;
+        }
+        return new ApiOperation() {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ApiOperation.class;
+            }
+
+            @Override
+            public String value() {
+                return apiGatewayForApiOp.method().getText() + apiGatewayForApiOp.path();
+            }
+
+            @Override
+            public String notes() {
+                return apiGatewayForApiOp.description();
+            }
+
+            @Override
+            public String[] tags() {
+                return new String[]{""};
+            }
+
+            @Override
+            public Class<?> response() {
+                return apiGatewayForApiOp.response();
+            }
+
+            @Override
+            public String responseContainer() {
+                return "";
+            }
+
+            @Override
+            public String responseReference() {
+                return "";
+            }
+
+            @Override
+            public String httpMethod() {
+                return apiGatewayForApiOp.method().getText();
+            }
+
+            @Override
+            public int position() {
+                return 0;
+            }
+
+            @Override
+            public String nickname() {
+                return "";
+            }
+
+            @Override
+            public String produces() {
+                return apiGatewayForApiOp.produces();
+            }
+
+            @Override
+            public String consumes() {
+                return apiGatewayForApiOp.consumes();
+            }
+
+            @Override
+            public String protocols() {
+                return apiGatewayForApiOp.protocols();
+            }
+
+            @Override
+            public Authorization[] authorizations() {
+                return new Authorization[0];
+            }
+
+            @Override
+            public boolean hidden() {
+                return apiGatewayForApiOp.hidden();
+            }
+
+            @Override
+            public ResponseHeader[] responseHeaders() {
+                return apiGatewayForApiOp.responseHeaders();
+            }
+
+            @Override
+            public int code() {
+                return 200;
+            }
+
+            @Override
+            public Extension[] extensions() {
+                return new Extension[0];
+            }
+
+            @Override
+            public boolean ignoreJsonView() {
+                return false;
+            }
+        };
+    }
+
 }

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.kongchen</groupId>
     <artifactId>swagger-maven-plugin</artifactId>
-    <version>3.1.9-SNAPSHOT</version>
+    <version>3.1.9-SNAPSHOT-ARCELIK</version>
     <packaging>maven-plugin</packaging>
     <name>Swagger Maven Plugin</name>
     <description>
@@ -58,7 +59,8 @@
         <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
         <github.global.server>github</github.global.server>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
+        <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
+        </sonatypeOssDistMgmtSnapshotsUrl>
 
         <!-- Dependency versions -->
         <maven.version>2.2.1</maven.version>
@@ -86,7 +88,7 @@
         <version.maven-release-plugin>2.5.3</version.maven-release-plugin>
         <version.plexus-component-metadata>1.5.5</version.plexus-component-metadata>
         <version.maven-compiler-plugin>2.3.2</version.maven-compiler-plugin>
-        <version.maven-plugin-plugin>3.3</version.maven-plugin-plugin>
+        <version.maven-plugin-plugin>3.6.0</version.maven-plugin-plugin>
         <version.animal-sniffer-plugin>1.14</version.animal-sniffer-plugin>
         <version.maven-source-plugin>2.1.2</version.maven-source-plugin>
         <version.maven-javadoc-plugin>2.7</version.maven-javadoc-plugin>
@@ -327,21 +329,22 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>mojo-descriptor</id>
+                        <id>default-descriptor</id>
                         <goals>
                             <goal>descriptor</goal>
                         </goals>
+                        <phase> process-classes</phase>
                     </execution>
-                    <!-- if you want to generate help goal -->
-                    <!--execution>
-                        <id>help-goal</id>
+                    <execution>
+                        <id>help-descriptor</id>
                         <goals>
                             <goal>helpmojo</goal>
                         </goals>
-                    </execution-->
+                        <phase>process-classes</phase>
+                    </execution>
                 </executions>
             </plugin>
-            <plugin>
+            <!--plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
                 <version>${version.animal-sniffer-plugin}</version>
@@ -361,7 +364,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin-->
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
