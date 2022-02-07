@@ -314,9 +314,13 @@ public abstract class AbstractReader {
         validParameterAnnotations.add(InjectParam.class);
         validParameterAnnotations.add(ApiParam.class);
         validParameterAnnotations.add(PathParam.class);
+        validParameterAnnotations.add(lambda.annotation.PathParam.class);
         validParameterAnnotations.add(QueryParam.class);
+        validParameterAnnotations.add(lambda.annotation.QueryParam.class);
         validParameterAnnotations.add(HeaderParam.class);
+        validParameterAnnotations.add(lambda.annotation.HeaderParam.class);
         validParameterAnnotations.add(FormParam.class);
+        validParameterAnnotations.add(lambda.annotation.FormParam.class);
         validParameterAnnotations.add(RequestParam.class);
         validParameterAnnotations.add(RequestBody.class);
         validParameterAnnotations.add(PathVariable.class);

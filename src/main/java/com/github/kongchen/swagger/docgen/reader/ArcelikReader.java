@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 
 import lambda.annotation.ApiGateway;
-import lambda.domain.HttpMethodType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.logging.Log;
 import org.reflections.Reflections;

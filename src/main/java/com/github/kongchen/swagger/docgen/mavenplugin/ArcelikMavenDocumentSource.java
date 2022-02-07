@@ -2,8 +2,7 @@ package com.github.kongchen.swagger.docgen.mavenplugin;
 
 import com.github.kongchen.swagger.docgen.AbstractDocumentSource;
 import com.github.kongchen.swagger.docgen.reader.ArcelikReader;
-import com.google.common.collect.Sets;
-import lambda.annotation.ApiGateway;
+import lambda.annotation.*;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -17,8 +16,15 @@ public class ArcelikMavenDocumentSource extends AbstractDocumentSource<ArcelikRe
 
     @Override
     protected Set<Class<?>> getValidClasses() {
-        return Sets.union(super.getValidClasses(),
-                apiSource.getValidClasses(ApiGateway.class));
+        Set<Class<?>> result = super.getValidClasses();
+        result.addAll(apiSource.getValidClasses(ApiGateway.class));
+        result.addAll(apiSource.getValidClasses(QueryParam.class));
+        result.addAll(apiSource.getValidClasses(PathParam.class));
+        result.addAll(apiSource.getValidClasses(FormParam.class));
+        result.addAll(apiSource.getValidClasses(HeaderParam.class));
+        result.addAll(apiSource.getValidClasses(GenerateApiDocs.class));
+        result.addAll(apiSource.getValidClasses(QueryParam.class));
+        return result;
     }
 
     @Override
