@@ -111,6 +111,9 @@ public class ApiSource {
     private boolean springmvc;
 
     @Parameter
+    private boolean arcelik;
+
+    @Parameter
     private boolean useJAXBAnnotationProcessor;
 
     @Parameter
@@ -136,10 +139,10 @@ public class ApiSource {
 
     @Parameter
     private List<String> modelConverters;
-    
+
     @Parameter
     private boolean skipInheritingClasses = false;
-    
+
     @Parameter
     private String operationIdFormat;
 
@@ -151,14 +154,14 @@ public class ApiSource {
 
     public Set<Class<?>> getValidClasses(Class<? extends Annotation> clazz) {
         Set<Class<?>> classes = new LinkedHashSet<Class<?>>();
-        
+
         List<String> prefixes = new ArrayList<String>();
         if (getLocations() == null) {
             prefixes.add("");
         } else {
             prefixes.addAll(getLocations());
         }
-        
+
         for (String location : prefixes) {
             Set<Class<?>> c = new Reflections(location).getTypesAnnotatedWith(clazz, true);
             classes.addAll(c);
@@ -394,14 +397,14 @@ public class ApiSource {
     }
 
     public List<String> getSwaggerExtensions() {
-		return swaggerExtensions;
-	}
+        return swaggerExtensions;
+    }
 
-	public void setSwaggerExtensions(List<String> swaggerExtensions) {
-		this.swaggerExtensions = swaggerExtensions;
-	}
+    public void setSwaggerExtensions(List<String> swaggerExtensions) {
+        this.swaggerExtensions = swaggerExtensions;
+    }
 
-	public String getApiSortComparator() {
+    public String getApiSortComparator() {
         return apiSortComparator;
     }
 
@@ -427,6 +430,10 @@ public class ApiSource {
 
     public boolean isSpringmvc() {
         return springmvc;
+    }
+
+    public boolean isArcelik() {
+        return arcelik;
     }
 
     public void setSpringmvc(boolean springmvc) {
@@ -482,14 +489,14 @@ public class ApiSource {
     }
 
     public String getOperationIdFormat() {
-		return operationIdFormat;
-	}
+        return operationIdFormat;
+    }
 
-	public void setOperationIdFormat(String operationIdFormat) {
-		this.operationIdFormat = operationIdFormat;
-	}
+    public void setOperationIdFormat(String operationIdFormat) {
+        this.operationIdFormat = operationIdFormat;
+    }
 
-	private String emptyToNull(String str) {
+    private String emptyToNull(String str) {
         return StringUtils.isEmpty(str) ? null : str;
     }
 

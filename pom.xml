@@ -291,6 +291,11 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.arcelikiot</groupId>
+            <artifactId>commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -328,12 +333,12 @@
                         </goals>
                     </execution>
                     <!-- if you want to generate help goal -->
-                    <execution>
+                    <!--execution>
                         <id>help-goal</id>
                         <goals>
                             <goal>helpmojo</goal>
                         </goals>
-                    </execution>
+                    </execution-->
                 </executions>
             </plugin>
             <plugin>
