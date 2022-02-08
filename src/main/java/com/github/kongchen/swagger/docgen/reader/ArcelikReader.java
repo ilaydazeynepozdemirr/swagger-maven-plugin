@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import lambda.annotation.ApiGateway;
+import lambda.annotation.GenerateApiDocs;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.logging.Log;
 import org.reflections.Reflections;
@@ -90,7 +91,15 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
         if (swagger == null) {
             swagger = new Swagger();
         }
-        Api api = AnnotationUtils.findAnnotation(cls, Api.class);
+
+        Api api;
+        GenerateApiDocs generateApiDocs = AnnotationUtils.findAnnotation(cls, GenerateApiDocs.class);
+        if (generateApiDocs == null) {
+            api = AnnotationUtils.findAnnotation(cls, Api.class);
+        } else {
+            api = convertApi(generateApiDocs);
+        }
+
         ApiGateway apiGatewayForPath = AnnotationUtils.findAnnotation(cls, ApiGateway.class);
         Path apiPath = convertPath(apiGatewayForPath);
 
@@ -724,6 +733,68 @@ public class ArcelikReader extends AbstractReader implements ClassSwaggerReader 
             @Override
             public boolean ignoreJsonView() {
                 return false;
+            }
+        };
+    }
+
+    private Api convertApi(GenerateApiDocs apiDocs) {
+        if (apiDocs == null) {
+            return null;
+        }
+        return new Api() {
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Api.class;
+            }
+
+            @Override
+            public String value() {
+                return apiDocs.value();
+            }
+
+            @Override
+            public String[] tags() {
+                return new String[]{""};
+            }
+
+            @Override
+            public String description() {
+                return apiDocs.description();
+            }
+
+            @Override
+            public String basePath() {
+                return apiDocs.basePath();
+            }
+
+            @Override
+            public int position() {
+                return 0;
+            }
+
+            @Override
+            public String produces() {
+                return apiDocs.produces();
+            }
+
+            @Override
+            public String consumes() {
+                return apiDocs.consumes();
+            }
+
+            @Override
+            public String protocols() {
+                return apiDocs.protocols();
+            }
+
+            @Override
+            public Authorization[] authorizations() {
+                return new Authorization[]{};
+            }
+
+            @Override
+            public boolean hidden() {
+                return apiDocs.hidden();
             }
         };
     }
