@@ -6,7 +6,7 @@ node(env.JENKINS_MACHINE) {
 		mvnHome = '/usr/share/maven'
 	}
 	stage('maven build') {
-        sh "'${mvnHome}/bin/mvn' clean install"
+        sh "'${mvnHome}/bin/mvn' clean install -DskipTests"
 	}
 }
 }
